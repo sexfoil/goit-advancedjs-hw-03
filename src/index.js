@@ -1,9 +1,11 @@
+import SlimSelect from 'slim-select';
+import iziToast from "izitoast";
+import "izitoast/dist/css/iziToast.min.css";
 import { fetchBreeds, fetchCatByBreed } from './cat-api';
 
 const elements = {
     selectBreed: document.querySelector('.breed-select'),
     pLoader: document.querySelector('.loader'),
-    pError: document.querySelector('.error'),
     divCatInfo: document.querySelector('.cat-info')
 }
 
@@ -13,26 +15,58 @@ function fillCatsData(cats) {
     }).join('');
 
     elements.selectBreed.insertAdjacentHTML("afterbegin", selectDataHTML);
+    setVisibility(elements.pLoader, false);
+    setVisibility(elements.selectBreed, true);
 }
 
 function showSearchResult({ url, breeds: info } = cat) {
     const contentHTML = `
-        <img src="${url}" alt="${info[0].name}" width="400" />
-        <h2>${info[0].name}</h2>
-        <p>${info[0].description}</p>
-        <p>Temperament: ${info[0].name}</p>
+        <img class="image" src="${url}" alt="${info[0].name}" />
+        <div class="text-info-block">
+            <h2 class="breed-name">${info[0].name}</h2>
+            <p class="description">${info[0].description}</p>
+            <p><span class="temperament">Temperament:</span> ${info[0].temperament}</p>
+        </div>
     `
-    elements.divCatInfo.insertAdjacentHTML("afterbegin", contentHTML);
+    elements.divCatInfo.innerHTML = contentHTML;
+    setVisibility(elements.pLoader, false);
+    setVisibility(elements.selectBreed, true);
+    setVisibility(elements.divCatInfo, true);
 }
+
+function showErrorMessage() {
+    iziToast.show({
+        message: "Oops! Something went wrong! Try reloading the page!",
+        messageColor: 'white',
+        backgroundColor: 'tomato',
+        timeout: 3000,
+        position: 'topCenter'
+    });
+}
+
+function setVisibility(element, isVisible) {
+    if (isVisible) {
+        element.removeAttribute("hidden");
+    } else {
+        element.setAttribute("hidden", "");
+    }
+}
+
+setVisibility(elements.divCatInfo, false);
 
 fetchBreeds()
     .then(data => fillCatsData(data))
-    .catch(err => console.log(err));
+    .catch(err => showErrorMessage());
 
 const onSelectChange = evt => {
+    elements.divCatInfo.innerHTML = '';
+    setVisibility(elements.pLoader, true);
+    setVisibility(elements.selectBreed, false);
+    setVisibility(elements.divCatInfo, false);
+
     fetchCatByBreed(evt.target.value)
         .then(data => showSearchResult(data[0]))
-        .catch(err => console.log(err));
+        .catch(err => showErrorMessage());
 }
 
 elements.selectBreed.addEventListener('change', onSelectChange);
