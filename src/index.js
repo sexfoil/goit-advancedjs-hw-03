@@ -1,4 +1,3 @@
-import SlimSelect from 'slim-select';
 import iziToast from "izitoast";
 import "izitoast/dist/css/iziToast.min.css";
 import { fetchBreeds, fetchCatByBreed } from './cat-api';
@@ -35,11 +34,12 @@ function showSearchResult({ url, breeds: info } = cat) {
 }
 
 function showErrorMessage() {
+    setVisibility(elements.pLoader, false);
     iziToast.show({
         message: "Oops! Something went wrong! Try reloading the page!",
         messageColor: 'white',
         backgroundColor: 'tomato',
-        timeout: 3000,
+        timeout: 4000,
         position: 'topCenter'
     });
 }
