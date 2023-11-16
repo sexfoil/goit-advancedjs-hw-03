@@ -1,21 +1,45 @@
+import SlimSelect from 'slim-select';
 import iziToast from "izitoast";
 import "izitoast/dist/css/iziToast.min.css";
 import { fetchBreeds, fetchCatByBreed } from './cat-api';
 
+const slimSelectSettings = {
+    showSearch: false,
+    placeholderText: "Select cat's breed"
+}
+
+const slimSelectEvent = {
+    afterChange: onSelectChange
+}
+
 const elements = {
-    selectBreed: document.querySelector('.breed-select'),
+    selectWraper: document.querySelector('.select-wraper'),
+    selectBreed: new SlimSelect({
+        select: '.breed-select',
+        settings: slimSelectSettings,
+        events: slimSelectEvent
+    }),
     pLoader: document.querySelector('.loader'),
     divCatInfo: document.querySelector('.cat-info')
 }
 
 function fillCatsData(cats) {
-    const selectDataHTML = cats.map(cat => {
-        return `<option value="${cat.id}">${cat.name}</option>`;
-    }).join('');
 
-    elements.selectBreed.insertAdjacentHTML("afterbegin", selectDataHTML);
+    const breedsData = [{
+        placeholder: true,
+        text: "Select cat's breed"
+    }];
+    
+    cats.forEach(cat => breedsData.push({
+            text: `${cat.name}`,
+            value: `${cat.id}`
+        })
+    );
+    
+    elements.selectBreed.setData(breedsData);
+
     setVisibility(elements.pLoader, false);
-    setVisibility(elements.selectBreed, true);
+    setVisibility(elements.selectWraper, true);
 }
 
 function showSearchResult({ url, breeds: info } = cat) {
@@ -29,7 +53,7 @@ function showSearchResult({ url, breeds: info } = cat) {
     `
     elements.divCatInfo.innerHTML = contentHTML;
     setVisibility(elements.pLoader, false);
-    setVisibility(elements.selectBreed, true);
+    setVisibility(elements.selectWraper, true);
     setVisibility(elements.divCatInfo, true);
 }
 
@@ -52,21 +76,21 @@ function setVisibility(element, isVisible) {
     }
 }
 
+setVisibility(elements.selectWraper, false);
 setVisibility(elements.divCatInfo, false);
 
 fetchBreeds()
     .then(data => fillCatsData(data))
     .catch(err => showErrorMessage());
 
-const onSelectChange = evt => {
-    elements.divCatInfo.innerHTML = '';
-    setVisibility(elements.pLoader, true);
-    setVisibility(elements.selectBreed, false);
-    setVisibility(elements.divCatInfo, false);
+function onSelectChange(values) {
+    if (!values[0].placeholder) {
+        setVisibility(elements.pLoader, true);
+        setVisibility(elements.divCatInfo, false);
+        elements.divCatInfo.innerHTML = '';
 
-    fetchCatByBreed(evt.target.value)
-        .then(data => showSearchResult(data[0]))
-        .catch(err => showErrorMessage());
+        fetchCatByBreed(values[0].value)
+            .then(data => showSearchResult(data[0]))
+            .catch(err => showErrorMessage());
+    }    
 }
-
-elements.selectBreed.addEventListener('change', onSelectChange);
